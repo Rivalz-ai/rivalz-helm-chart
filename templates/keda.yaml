@@ -1,0 +1,22 @@
+{{- if and .Values.autoscaling.enabled ( eq .Values.autoscaling.kind "keda") }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "application.fullname" . }}
+spec:
+  scaleTargetRef:
+    {{- if .Values.statefulset }}
+    kind: StatefulSet
+    {{- else }}
+    kind: Deployment
+    {{- end }}
+    name: {{ include "application.fullname" . }}
+  pollingInterval: {{ .Values.autoscaling.pollingInterval }}
+  cooldownPeriod:  {{ .Values.autoscaling.cooldownPeriod }} # Optional. Default: 300 seconds
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}   # Optional. Default: 0
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  {{- with .Values.autoscaling.triggers }}
+  triggers:
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,62 @@
+{{- if ( eq .Values.type "cronjob") }}
+{{- range $.Values.cronjob.crons }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .name }}
+spec:
+  schedule: {{ .schedule | quote }}
+  successfulJobsHistoryLimit: {{ $.Values.cronjob.successHistory }}
+  failedJobsHistoryLimit: {{ $.Values.cronjob.failedHistory }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
+        spec:
+          {{- if $.Values.secretMounts }}
+          volumes: 
+            {{- range $.Values.secretMounts }}
+            - name: {{ .name }}
+              secret:
+                secretName: {{ .secretName }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+          - name: {{ $.Chart.Name }}
+            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            {{- if .commands }}
+            command: 
+              - /bin/sh
+              - -c
+              - "{{ .commands }}"
+            {{- end }}     
+            env: {{ toYaml $.Values.extraEnvs | nindent 14 }}
+            envFrom: {{ toYaml $.Values.envFrom | nindent 14 }}
+            {{- if $.Values.resources }}
+            resources:
+              {{- toYaml $.Values.resources | nindent 14 }}
+            {{- end }}
+            {{- if $.Values.secretMounts }}
+            volumeMounts: 
+              {{- range $.Values.secretMounts }}
+              - name: {{ .name }}
+                mountPath: {{ .path }}
+                {{- if .subPath }}
+                subPath: {{ .subPath }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          restartPolicy: {{ $.Values.cronjob.restartPolicy }}
+      {{- if $.Values.cronjob.backoffLimit }}
+      backoffLimit: {{ $.Values.cronjob.backoffLimit }}
+      {{- end}}
+---
+{{- end }}
+{{- end }}

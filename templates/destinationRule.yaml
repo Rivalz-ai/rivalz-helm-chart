@@ -1,0 +1,24 @@
+{{- if .Values.destinationRule.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: "{{ include "application.fullname" . }}-connection"
+spec:
+  host: {{ include "application.fullname" . }}
+  {{- if .Values.destinationRule.trafficPolicy }}
+  trafficPolicy: 
+    connectionPool:
+      {{- if eq .Values.destinationRule.trafficPolicy.type "http" }}
+      http:
+        http1MaxPendingRequests: {{ .Values.destinationRule.trafficPolicy.maxPendingRequests }}
+        http2MaxRequests: {{ .Values.destinationRule.trafficPolicy.maxRequests }}
+        maxRequestsPerConnection: {{ .Values.destinationRule.trafficPolicy.maxRequestsPerConnection }}
+      {{- end}}
+      {{- if eq .Values.destinationRule.trafficPolicy.type "tcp" }}
+      tcp:
+        maxConnections: {{ .Values.destinationRule.trafficPolicy.maxRequests }}
+        connectTimeout: {{ .Values.destinationRule.trafficPolicy.connectTimeout }}
+      {{- end }}
+  {{- end }}
+{{- end }}
+  

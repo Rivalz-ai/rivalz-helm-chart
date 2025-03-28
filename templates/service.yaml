@@ -1,0 +1,25 @@
+{{- if eq .Values.type "app" }}
+{{- $serviceName := .Values.service.name | default "http" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "application.fullname" . }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+  {{- if .Values.service.annotations  }}
+  annotations:
+    {{ toYaml .Values.service.annotations  | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.service.disableClusterIP }}
+  clusterIP: None
+  {{- end}}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.image.containerPort }}
+      protocol: TCP
+      name: {{ $serviceName }}
+  selector:
+    {{- include "application.selectorLabels" . | nindent 4 }}
+{{- end }}

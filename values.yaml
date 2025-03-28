@@ -1,0 +1,122 @@
+replicaCount: 1
+type: app # There are app, worker, cronjob
+statefulset: false
+nameOverride: "myApp"
+
+image:
+  repository: anhkhoa3010/istio-test
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "3.0"
+  containerPort: 5555
+terminationGracePeriodSeconds: 60
+
+extraEnvs: []
+envFrom: []
+
+podAnnotations: {}
+
+livenessProbe: []
+  # httpGet:
+  #   path: /
+  #   port: http
+  # initialDelaySeconds: 30
+  # failureThreshold: 3
+  # periodSeconds: 10
+  # timeoutSeconds: 5
+
+readinessProbe: []
+  # httpGet:
+  #   path: /
+  #   port: http
+  # initialDelaySeconds: 30
+  # failureThreshold: 3
+  # periodSeconds: 10
+  # timeoutSeconds: 5
+
+imagePullSecrets: []
+
+resources:
+  limits: {}
+  requests: 
+    cpu: "200m"
+    memory: "200Mi"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: ""
+
+### Below is the values of cronjob
+cronjob:
+  crons:
+    - name: one-minute-cron
+      schedule: "*/1 * * * *"
+      commands: ""
+    - name: five-minute-cron
+      schedule: "*/5 * * * *"
+      commands: ""
+  restartPolicy: OnFailure
+  backoffLimit: 5
+  successHistory: 1
+  failedHistory: 1
+service:
+  disableClusterIP: false
+  type: ClusterIP
+  name: http
+  port: 80
+  annotations: {}
+  timneout: 200s
+
+ingress:
+  enabled: true
+  kind: gateway ### with 2 values: gateway and ingress
+  gateway: ingressgateway
+  gatewayname: istio-system/rivalz-ai
+  hosts: 
+    - '*'
+  servers: 
+    - port: 80
+      name: http-gateway
+      protocol: HTTP
+  uri_prefix: "/test/" ### Please mention ending slash
+  # uri_rewrite: "/"
+
+headers:
+  request: {}
+  response: {}
+
+destinationRule:
+  enabled: false
+  trafficPolicy:
+    type: http # value is: http or tcp
+    maxPendingRequests: 100
+    maxRequests: 5000
+    maxRequestsPerConnection: 1
+    connectTimeout: 5m
+
+autoscaling:
+  enabled: false
+  kind: keda ### There are hpa and keda
+  minReplicas: 1
+  maxReplicas: 10
+   ### hpa properties ###
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  ### Keda properties ###
+  pollingInterval: 30
+  cooldownPeriod:  300 # Optional. Default: 300 seconds
+  triggers:
+    - type: cpu
+      metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+      metadata:
+        value: "60"
+        #containerName: ""
+    - type: memory
+      metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+      metadata:
+        value: "60"
+        #containerName: ""

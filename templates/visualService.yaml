@@ -1,0 +1,55 @@
+{{- if and .Values.ingress.enabled ( eq .Values.ingress.kind "gateway" ) }}
+{{- $ingressHosts := .Values.ingress.hosts | default "*" }}
+{{- $uri_prefix := .Values.ingress.uri_prefix | default "/" }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "application.fullname" . }}
+spec:
+  gateways:
+  - {{ .Values.ingress.gatewayname }}
+  hosts:
+  {{- range $ingressHosts }}
+    - {{ . | quote }}
+  {{- end }}
+  http:
+  - name: {{ include "application.fullname" . }}-rules
+    match:
+      {{- range .Values.ingress.servers }}
+      - uri:
+          prefix: {{ $uri_prefix }}
+      {{- end }}
+    {{- if .Values.ingress.uri_rewrite }}
+    rewrite:
+      uri: {{ .Values.ingress.uri_rewrite }}
+    {{- end }}
+    {{- if .Values.headers.request }}
+    headers:
+      request:
+        {{- toYaml .Values.headers.request | nindent 8 }}
+    {{- end }}
+    route:
+    - destination:
+        port:
+          number: {{ .Values.service.port }}
+        host: {{ include "application.fullname" . }}
+      {{- if .Values.headers.response }}
+      headers:
+        response:
+          {{- toYaml .Values.headers.response | nindent 10 }}
+      {{- end }}
+    timeout: {{ .Values.service.timeout }}
+    # corsPolicy:
+    #   allowOrigin:
+    #     - "*"
+    #   allowMethods:
+    #     - POST
+    #     - GET
+    #     - PUT
+    #     - DELETE
+    #     - PATCH
+    #     - OPTIONS
+    #   allowHeaders:
+    #      - "*"
+    #   allowCredentials: true
+{{- end }}
