@@ -1,11 +1,12 @@
 {{- if and .Values.ingress.enabled ( eq .Values.ingress.kind "ingress" ) }}
 {{- $ingressHosts := .Values.ingress.hosts | default "*" }}
 {{- $uri_prefix := .Values.ingress.uri_prefix | default "/" }}
+{{- $ingressClass := .Values.ingress.ingressClass | default "istio" }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    kubernetes.io/ingress.class: istio
+    kubernetes.io/ingress.class: {{ $ingressClass }}
   name: {{ include "application.fullname" . }}
 spec:
   rules:
