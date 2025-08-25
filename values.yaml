@@ -2,6 +2,13 @@ replicaCount: 1
 type: app # There are app, worker, cronjob
 statefulset: false
 nameOverride: "myApp"
+sidecar: false
+
+sidecarResource:
+  cpuLimit: 200m
+  memLimit: 200Mi
+  cpu: 20m
+  mem: 20Mi
 
 image:
   repository: anhkhoa3010/istio-test

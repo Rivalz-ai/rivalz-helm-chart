@@ -15,6 +15,12 @@ spec:
   template:
     metadata:
       annotations:
+        {{- if .Values.sidecar }}
+        sidecar.istio.io/proxyCPULimit: {{ .Values.sidecarResource.cpuLimit }}
+        sidecar.istio.io/proxyMemoryLimit: {{ .Values.sidecarResource.memLimit }}
+        sidecar.istio.io/proxyCPU: {{ .Values.sidecarResource.cpu }}
+        sidecar.istio.io/proxyMemory: {{ .Values.sidecarResource.mem }}
+        {{- end }}
         {{- if .Values.podAnnotations  }}
         {{- toYaml .Values.podAnnotations  | nindent 8 }}
         {{- end }}
